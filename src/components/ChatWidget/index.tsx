@@ -348,13 +348,13 @@ export default function ChatWidget({ apiUrl = '', initialOpen = false, embedded 
 
   // ── Embedded mode (Wix iframe) ──────────────────────────────────────────────
   if (embedded) {
-    return (
-      <div className="w-full h-full relative">
-        {/* Floating button — shown when minimised */}
-        {isMinimized && (
+    if (isMinimized) {
+      // Show only the floating button in the bottom-right of the iframe
+      return (
+        <div className="w-full h-full relative">
           <button
             onClick={() => setIsMinimized(false)}
-            className="absolute bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center transition-transform duration-200 hover:scale-105 active:scale-95"
+            className="absolute bottom-4 right-4 w-14 h-14 rounded-full flex items-center justify-center transition-transform duration-200 hover:scale-105 active:scale-95"
             style={{ background: '#A855F7', boxShadow: '0 8px 32px rgba(168,85,247,0.45)' }}
             aria-label="Open chat"
           >
@@ -366,23 +366,17 @@ export default function ChatWidget({ apiUrl = '', initialOpen = false, embedded 
               style={{ background: '#F9A8D4' }}
             />
           </button>
-        )}
+        </div>
+      )
+    }
 
-        {/* Full chat panel — shown when expanded */}
-        {!isMinimized && (
-          <div
-            className="absolute bottom-6 right-6 w-[380px] flex flex-col rounded-3xl overflow-hidden"
-            style={{
-              height: '560px',
-              maxHeight: 'calc(100% - 48px)',
-              background: '#FFFFFF',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
-            }}
-          >
-            {header}
-            {body}
-          </div>
-        )}
+    // Show the full chat panel filling the iframe
+    return (
+      <div className="w-full h-full flex flex-col overflow-hidden rounded-3xl"
+        style={{ background: '#FFFFFF', boxShadow: '0 24px 80px rgba(0,0,0,0.18)' }}
+      >
+        {header}
+        {body}
       </div>
     )
   }
