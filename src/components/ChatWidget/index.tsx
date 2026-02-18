@@ -223,10 +223,8 @@ export default function ChatWidget({ apiUrl = '', initialOpen = false }: ChatWid
       {/* Chat panel */}
       {isOpen && (
         <div
-          className="fixed bottom-6 right-6 w-[380px] flex flex-col rounded-3xl overflow-hidden z-50"
+          className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[380px] h-full sm:h-[600px] sm:max-h-[calc(100vh-48px)] flex flex-col sm:rounded-3xl overflow-hidden z-50"
           style={{
-            height: '600px',
-            maxHeight: 'calc(100vh - 48px)',
             background: '#FFFFFF',
             boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
           }}
