@@ -16,7 +16,7 @@ export default function WidgetPage() {
 
   return (
     <div className="min-h-screen bg-transparent">
-      <ChatWidget initialOpen={true} apiUrl={apiUrl} />
+      <ChatWidget initialOpen={false} apiUrl={apiUrl} />
     </div>
   )
 }
