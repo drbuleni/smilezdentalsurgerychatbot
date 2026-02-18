@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdf = require('pdf-parse') as (buffer: Buffer) => Promise<{ text: string; numpages: number }>
 import { getOpenAIClient, EMBEDDING_MODEL } from './openai'
 import { supabaseAdmin } from './supabase'
 
@@ -90,7 +88,12 @@ export async function processPDF(buffer: Buffer, filename: string): Promise<Proc
   const openai = getOpenAIClient()
 
   // 1. Extract text from PDF
-  const pdfData = await pdf(buffer)
+  // Dynamic import ensures the CJS module loads correctly in Next.js App Router
+  const pdfParseModule = await import('pdf-parse')
+  const parsePdf = (pdfParseModule.default ?? pdfParseModule) as (
+    b: Buffer
+  ) => Promise<{ text: string; numpages: number }>
+  const pdfData = await parsePdf(buffer)
   const rawText = pdfData.text.replace(/\s+/g, ' ').trim()
 
   if (!rawText || rawText.length < 50) {
