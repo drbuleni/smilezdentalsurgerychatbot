@@ -131,7 +131,7 @@ export default function AppointmentForm({ onSubmit, onCancel, apiUrl = '' }: App
             value={formData.fullName}
             onChange={(e) => handleChange('fullName', e.target.value)}
             placeholder="e.g. Sipho Dlamini"
-            className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 ${
+            className={`w-full px-3 py-2 text-sm border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 ${
               errors.fullName ? 'border-red-400' : 'border-gray-200'
             }`}
           />
@@ -148,7 +148,7 @@ export default function AppointmentForm({ onSubmit, onCancel, apiUrl = '' }: App
             value={formData.phoneNumber}
             onChange={(e) => handleChange('phoneNumber', e.target.value)}
             placeholder="e.g. 082 123 4567"
-            className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 ${
+            className={`w-full px-3 py-2 text-sm border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 ${
               errors.phoneNumber ? 'border-red-400' : 'border-gray-200'
             }`}
           />
@@ -165,7 +165,7 @@ export default function AppointmentForm({ onSubmit, onCancel, apiUrl = '' }: App
             value={formData.email}
             onChange={(e) => handleChange('email', e.target.value)}
             placeholder="e.g. sipho@email.com"
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
           />
         </div>
 
@@ -178,7 +178,7 @@ export default function AppointmentForm({ onSubmit, onCancel, apiUrl = '' }: App
               value={formData.preferredDate}
               min={today}
               onChange={(e) => handleChange('preferredDate', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400"
             />
           </div>
           <div>
@@ -186,7 +186,7 @@ export default function AppointmentForm({ onSubmit, onCancel, apiUrl = '' }: App
             <select
               value={formData.preferredTime}
               onChange={(e) => handleChange('preferredTime', e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white"
             >
               <option value="">Any time</option>
               {TIME_OPTIONS.map((t) => (
@@ -206,7 +206,7 @@ export default function AppointmentForm({ onSubmit, onCancel, apiUrl = '' }: App
             onChange={(e) => handleChange('reasonForVisit', e.target.value)}
             placeholder="e.g. Routine check-up, tooth pain, consultation..."
             rows={2}
-            className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none ${
+            className={`w-full px-3 py-2 text-sm border rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none ${
               errors.reasonForVisit ? 'border-red-400' : 'border-gray-200'
             }`}
           />
@@ -225,7 +225,7 @@ export default function AppointmentForm({ onSubmit, onCancel, apiUrl = '' }: App
             onChange={(e) => handleChange('specialRequirements', e.target.value)}
             placeholder="e.g. dental anxiety, mobility needs, interpreter needed..."
             rows={2}
-            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"
+            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"
           />
         </div>
 

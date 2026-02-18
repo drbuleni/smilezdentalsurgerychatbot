@@ -10,10 +10,11 @@ interface ChatWidgetProps {
   initialOpen?: boolean
 }
 
-const GREETING: Message = {
-  id: 'greeting',
-  role: 'assistant',
-  content: `Hello there! 😄 I'm **Dr. Thembeka Buleni's AI Assistant** — think of me as the friendly face of Smilez Dental Surgery, just without the white coat!
+function generateId(): string {
+  return Math.random().toString(36).slice(2, 11)
+}
+
+const GREETING_CONTENT = `Hello there! 😄 I'm **Dr. Thembeka Buleni's AI Assistant** — think of me as the friendly face of Smilez Dental Surgery, just without the white coat!
 
 I can help you with:
 - Services and treatments
@@ -24,17 +25,14 @@ I can help you with:
 
 **For dental emergencies, please call us directly on 013 692 8249.**
 
-So, how can I put a smile on your face today? 😁`,
-  timestamp: new Date(),
-}
-
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 11)
-}
+So, how can I put a smile on your face today? 😁`
 
 export default function ChatWidget({ apiUrl = '', initialOpen = false }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(initialOpen)
-  const [messages, setMessages] = useState<Message[]>([GREETING])
+  // Lazy initializer so timestamp is created client-side only (prevents hydration mismatch)
+  const [messages, setMessages] = useState<Message[]>(() => [
+    { id: 'greeting', role: 'assistant', content: GREETING_CONTENT, timestamp: new Date() },
+  ])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
   const [showAppointmentForm, setShowAppointmentForm] = useState(false)
@@ -343,9 +341,8 @@ export default function ChatWidget({ apiUrl = '', initialOpen = false }: ChatWid
                     placeholder="Ask me anything..."
                     rows={1}
                     disabled={isStreaming}
-                    className="flex-1 text-sm bg-transparent outline-none resize-none max-h-[80px] leading-relaxed disabled:opacity-50 placeholder-gray-400"
+                    className="flex-1 text-sm text-gray-900 bg-transparent outline-none resize-none max-h-[80px] leading-relaxed disabled:opacity-50 placeholder-gray-400"
                     style={{
-                      color: '#111827',
                       overflowY: input.split('\n').length > 3 ? 'auto' : 'hidden',
                     }}
                   />

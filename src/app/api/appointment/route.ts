@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { sendAppointmentEmail } from '@/lib/email'
+import { sendAppointmentEmail, sendUserConfirmationEmail } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -87,6 +87,21 @@ export async function POST(request: NextRequest) {
         createdAt: appointment.created_at,
       })
       emailSent = true
+
+      // Send confirmation email to patient (if they provided an email)
+      if (appointment.email) {
+        await sendUserConfirmationEmail({
+          id: appointment.id,
+          fullName: appointment.full_name,
+          phoneNumber: appointment.phone_number,
+          email: appointment.email,
+          preferredDate: appointment.preferred_date,
+          preferredTime: appointment.preferred_time,
+          reasonForVisit: appointment.reason_for_visit,
+          specialRequirements: appointment.special_requirements,
+          createdAt: appointment.created_at,
+        }).catch((e) => console.error('User confirmation email error:', e))
+      }
 
       // Update email_sent flag
       await supabase
