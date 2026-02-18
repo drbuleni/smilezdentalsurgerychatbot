@@ -9,8 +9,9 @@ const nextConfig: NextConfig = {
       {
         source: "/widget",
         headers: [
-          // Allow any origin to embed the widget in an iframe
-          { key: "X-Frame-Options", value: "ALLOWALL" },
+          // Allow any origin to embed the widget in an iframe.
+          // X-Frame-Options is intentionally omitted — the only valid permissive
+          // option is to not set it. frame-ancestors * in CSP handles modern browsers.
           { key: "Content-Security-Policy", value: "frame-ancestors *" },
         ],
       },
