@@ -15,8 +15,8 @@ export default function WidgetPage() {
   const apiUrl = process.env.NEXT_PUBLIC_APP_URL || ''
 
   return (
-    <div className="min-h-screen bg-transparent">
-      <ChatWidget initialOpen={false} apiUrl={apiUrl} />
+    <div className="h-screen bg-transparent flex flex-col">
+      <ChatWidget embedded={true} apiUrl={apiUrl} />
     </div>
   )
 }

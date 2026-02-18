@@ -8,6 +8,7 @@ import TypingIndicator from './TypingIndicator'
 interface ChatWidgetProps {
   apiUrl?: string
   initialOpen?: boolean
+  embedded?: boolean
 }
 
 function generateId(): string {
@@ -27,8 +28,9 @@ I can help you with:
 
 So, how can I put a smile on your face today? 😁`
 
-export default function ChatWidget({ apiUrl = '', initialOpen = false }: ChatWidgetProps) {
-  const [isOpen, setIsOpen] = useState(initialOpen)
+export default function ChatWidget({ apiUrl = '', initialOpen = false, embedded = false }: ChatWidgetProps) {
+  const [isOpen, setIsOpen] = useState(embedded ? true : initialOpen)
+  const [isMinimized, setIsMinimized] = useState(false)
   // Lazy initializer so timestamp is created client-side only (prevents hydration mismatch)
   const [messages, setMessages] = useState<Message[]>(() => [
     { id: 'greeting', role: 'assistant', content: GREETING_CONTENT, timestamp: new Date() },
@@ -200,6 +202,169 @@ export default function ChatWidget({ apiUrl = '', initialOpen = false }: ChatWid
 
   const canSend = input.trim().length > 0 && !isStreaming
 
+  // Shared header used in both modes
+  const header = (
+    <div
+      className="flex items-center gap-3 px-5 py-4 flex-shrink-0"
+      style={{ background: '#A855F7', cursor: embedded && isMinimized ? 'pointer' : 'default' }}
+      onClick={() => { if (embedded && isMinimized) setIsMinimized(false) }}
+    >
+      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+        </svg>
+      </div>
+      <div className="flex-1 min-w-0">
+        <h2 className="text-white font-semibold text-sm leading-tight truncate">
+          Dr. Thembeka Buleni&apos;s AI Assistant
+        </h2>
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-300" />
+          <p className="text-white/75 text-xs">Always here to help</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        {!showAppointmentForm && (
+          <button
+            onClick={() => setShowAppointmentForm(true)}
+            className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+            title="Book appointment"
+            aria-label="Book appointment"
+          >
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </button>
+        )}
+        <button
+          onClick={() => embedded ? setIsMinimized(!isMinimized) : setIsOpen(false)}
+          className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+          aria-label={embedded ? (isMinimized ? 'Expand' : 'Minimise') : 'Close'}
+        >
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d={embedded
+                ? (isMinimized ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7')
+                : 'M19 9l-7 7-7-7'} />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
+
+  // Shared chat body (messages + quick replies + input)
+  const body = (
+    <>
+      {/* Content */}
+      {showAppointmentForm ? (
+        <div className="flex-1 overflow-hidden">
+          <AppointmentForm
+            onSubmit={handleAppointmentSubmit}
+            onCancel={() => setShowAppointmentForm(false)}
+            apiUrl={apiUrl}
+          />
+        </div>
+      ) : (
+        <>
+          {/* Messages */}
+          <div
+            className="flex-1 overflow-y-auto px-4 py-4 space-y-1"
+            style={{ background: '#FAFAFA' }}
+          >
+            {messages.map((msg) => (
+              <ChatMessage key={msg.id} message={msg} />
+            ))}
+            {isStreaming && messages[messages.length - 1]?.content === '' && (
+              <TypingIndicator />
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick replies */}
+          {messages.length === 1 && (
+            <div
+              className="px-4 py-2.5 flex flex-wrap gap-2"
+              style={{ background: '#FAFAFA', borderTop: '1px solid #F0F0F0' }}
+            >
+              {QUICK_REPLIES.map((reply) => (
+                <button
+                  key={reply}
+                  onClick={() =>
+                    reply === 'Book an appointment'
+                      ? setShowAppointmentForm(true)
+                      : sendMessage(reply)
+                  }
+                  className="text-xs px-3 py-1.5 rounded-full font-medium transition-opacity hover:opacity-75"
+                  style={{ background: '#FEE2F0', color: '#9D174D' }}
+                >
+                  {reply}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Input */}
+          <div
+            className="px-4 py-3 flex-shrink-0 bg-white"
+            style={{ borderTop: '1px solid #F0F0F0' }}
+          >
+            <div
+              className="flex items-end gap-2 px-4 py-2.5 rounded-full"
+              style={{ background: '#F3F4F6' }}
+            >
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask me anything..."
+                rows={1}
+                disabled={isStreaming}
+                className="flex-1 text-sm text-gray-900 bg-transparent outline-none resize-none max-h-[80px] leading-relaxed disabled:opacity-50 placeholder-gray-400"
+                style={{
+                  overflowY: input.split('\n').length > 3 ? 'auto' : 'hidden',
+                }}
+              />
+              <button
+                onClick={() => sendMessage()}
+                disabled={!canSend}
+                className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 disabled:opacity-30"
+                style={{ background: canSend ? '#A855F7' : '#D1D5DB' }}
+                aria-label="Send"
+              >
+                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-center text-[10px] mt-2" style={{ color: '#9CA3AF' }}>
+              AI assistant · Not a substitute for professional dental advice
+            </p>
+          </div>
+        </>
+      )}
+    </>
+  )
+
+  // ── Embedded mode (Wix iframe) ──────────────────────────────────────────────
+  if (embedded) {
+    return (
+      <div
+        className="flex flex-col w-full overflow-hidden rounded-3xl"
+        style={{
+          height: isMinimized ? '66px' : '100%',
+          background: '#FFFFFF',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+          transition: 'height 0.25s ease',
+        }}
+      >
+        {header}
+        {!isMinimized && body}
+      </div>
+    )
+  }
+
+  // ── Floating mode (standalone page / direct embed) ──────────────────────────
   return (
     <>
       {/* Floating button */}
@@ -229,139 +394,8 @@ export default function ChatWidget({ apiUrl = '', initialOpen = false }: ChatWid
             boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
           }}
         >
-          {/* Header */}
-          <div
-            className="flex items-center gap-3 px-5 py-4 flex-shrink-0"
-            style={{ background: '#A855F7' }}
-          >
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-              {/* Sparkle / AI icon */}
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-white font-semibold text-sm leading-tight truncate">
-                Dr. Thembeka Buleni&apos;s AI Assistant
-              </h2>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-300" />
-                <p className="text-white/75 text-xs">Always here to help</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5">
-              {!showAppointmentForm && (
-                <button
-                  onClick={() => setShowAppointmentForm(true)}
-                  className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
-                  title="Book appointment"
-                  aria-label="Book appointment"
-                >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </button>
-              )}
-              <button
-                onClick={() => setIsOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
-                aria-label="Close"
-              >
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          {/* Content */}
-          {showAppointmentForm ? (
-            <div className="flex-1 overflow-hidden">
-              <AppointmentForm
-                onSubmit={handleAppointmentSubmit}
-                onCancel={() => setShowAppointmentForm(false)}
-                apiUrl={apiUrl}
-              />
-            </div>
-          ) : (
-            <>
-              {/* Messages */}
-              <div
-                className="flex-1 overflow-y-auto px-4 py-4 space-y-1"
-                style={{ background: '#FAFAFA' }}
-              >
-                {messages.map((msg) => (
-                  <ChatMessage key={msg.id} message={msg} />
-                ))}
-                {isStreaming && messages[messages.length - 1]?.content === '' && (
-                  <TypingIndicator />
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Quick replies */}
-              {messages.length === 1 && (
-                <div
-                  className="px-4 py-2.5 flex flex-wrap gap-2"
-                  style={{ background: '#FAFAFA', borderTop: '1px solid #F0F0F0' }}
-                >
-                  {QUICK_REPLIES.map((reply) => (
-                    <button
-                      key={reply}
-                      onClick={() =>
-                        reply === 'Book an appointment'
-                          ? setShowAppointmentForm(true)
-                          : sendMessage(reply)
-                      }
-                      className="text-xs px-3 py-1.5 rounded-full font-medium transition-opacity hover:opacity-75"
-                      style={{ background: '#FEE2F0', color: '#9D174D' }}
-                    >
-                      {reply}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Input */}
-              <div
-                className="px-4 py-3 flex-shrink-0 bg-white"
-                style={{ borderTop: '1px solid #F0F0F0' }}
-              >
-                <div
-                  className="flex items-end gap-2 px-4 py-2.5 rounded-full"
-                  style={{ background: '#F3F4F6' }}
-                >
-                  <textarea
-                    ref={inputRef}
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Ask me anything..."
-                    rows={1}
-                    disabled={isStreaming}
-                    className="flex-1 text-sm text-gray-900 bg-transparent outline-none resize-none max-h-[80px] leading-relaxed disabled:opacity-50 placeholder-gray-400"
-                    style={{
-                      overflowY: input.split('\n').length > 3 ? 'auto' : 'hidden',
-                    }}
-                  />
-                  <button
-                    onClick={() => sendMessage()}
-                    disabled={!canSend}
-                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-150 disabled:opacity-30"
-                    style={{ background: canSend ? '#A855F7' : '#D1D5DB' }}
-                    aria-label="Send"
-                  >
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-                    </svg>
-                  </button>
-                </div>
-                <p className="text-center text-[10px] mt-2" style={{ color: '#9CA3AF' }}>
-                  AI assistant · Not a substitute for professional dental advice
-                </p>
-              </div>
-            </>
-          )}
+          {header}
+          {body}
         </div>
       )}
     </>
