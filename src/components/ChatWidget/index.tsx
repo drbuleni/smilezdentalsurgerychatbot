@@ -30,7 +30,7 @@ So, how can I put a smile on your face today? 😁`
 
 export default function ChatWidget({ apiUrl = '', initialOpen = false, embedded = false }: ChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(embedded ? true : initialOpen)
-  const [isMinimized, setIsMinimized] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(embedded ? true : false)
   // Lazy initializer so timestamp is created client-side only (prevents hydration mismatch)
   const [messages, setMessages] = useState<Message[]>(() => [
     { id: 'greeting', role: 'assistant', content: GREETING_CONTENT, timestamp: new Date() },
@@ -349,17 +349,40 @@ export default function ChatWidget({ apiUrl = '', initialOpen = false, embedded 
   // ── Embedded mode (Wix iframe) ──────────────────────────────────────────────
   if (embedded) {
     return (
-      <div
-        className="flex flex-col w-full overflow-hidden rounded-3xl"
-        style={{
-          height: isMinimized ? '66px' : '100%',
-          background: '#FFFFFF',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
-          transition: 'height 0.25s ease',
-        }}
-      >
-        {header}
-        {!isMinimized && body}
+      <div className="w-full h-full relative">
+        {/* Floating button — shown when minimised */}
+        {isMinimized && (
+          <button
+            onClick={() => setIsMinimized(false)}
+            className="absolute bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center transition-transform duration-200 hover:scale-105 active:scale-95"
+            style={{ background: '#A855F7', boxShadow: '0 8px 32px rgba(168,85,247,0.45)' }}
+            aria-label="Open chat"
+          >
+            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
+            </svg>
+            <span
+              className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white animate-pulse"
+              style={{ background: '#F9A8D4' }}
+            />
+          </button>
+        )}
+
+        {/* Full chat panel — shown when expanded */}
+        {!isMinimized && (
+          <div
+            className="absolute bottom-6 right-6 w-[380px] flex flex-col rounded-3xl overflow-hidden"
+            style={{
+              height: '560px',
+              maxHeight: 'calc(100% - 48px)',
+              background: '#FFFFFF',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+            }}
+          >
+            {header}
+            {body}
+          </div>
+        )}
       </div>
     )
   }
