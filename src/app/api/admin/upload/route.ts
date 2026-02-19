@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { processPDF } from '@/lib/pdf-processor'
+import { processPDF, processText } from '@/lib/pdf-processor'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60 // PDF processing can take time
+export const maxDuration = 60
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 
@@ -17,7 +17,9 @@ function checkAdminAuth(request: NextRequest): boolean {
   return provided === adminPassword
 }
 
-// POST /api/admin/upload — upload and process a PDF
+const ALLOWED_TYPES = ['application/pdf', 'text/plain']
+
+// POST /api/admin/upload — upload and process a PDF or TXT file
 export async function POST(request: NextRequest) {
   if (!checkAdminAuth(request)) {
     return NextResponse.json({ error: 'Unauthorised' }, { status: 401 })
@@ -35,9 +37,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 })
   }
 
-  if (file.type !== 'application/pdf') {
+  const fileType = file.type || (file.name.endsWith('.txt') ? 'text/plain' : '')
+  if (!ALLOWED_TYPES.includes(fileType)) {
     return NextResponse.json(
-      { error: 'Only PDF files are supported' },
+      { error: 'Only PDF and TXT files are supported' },
       { status: 400 }
     )
   }
@@ -50,10 +53,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    let result
 
-    const result = await processPDF(buffer, file.name)
+    if (fileType === 'text/plain') {
+      const text = await file.text()
+      result = await processText(text, file.name, file.size)
+    } else {
+      const arrayBuffer = await file.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      result = await processPDF(buffer, file.name)
+    }
 
     return NextResponse.json({
       success: true,
@@ -68,6 +77,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Upload processing error:', error)
     const message = error instanceof Error ? error.message : 'Unknown error occurred'
-    return NextResponse.json({ error: `Failed to process PDF: ${message}` }, { status: 500 })
+    return NextResponse.json({ error: `Failed to process file: ${message}` }, { status: 500 })
   }
 }

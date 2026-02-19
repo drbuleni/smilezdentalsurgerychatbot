@@ -79,6 +79,72 @@ function splitTextIntoChunks(text: string, chunkSize = CHUNK_SIZE, overlap = CHU
 }
 
 /**
+ * Process raw text: chunk, embed, and store in Supabase.
+ * Used for plain .txt uploads where no PDF parsing is needed.
+ */
+export async function processText(text: string, filename: string, fileSize: number): Promise<ProcessResult> {
+  const supabase = supabaseAdmin()
+  const openai = getOpenAIClient()
+
+  const rawText = text.replace(/\r\n/g, '\n').trim()
+  if (!rawText || rawText.length < 10) {
+    throw new Error(`File "${filename}" appears to be empty.`)
+  }
+
+  const chunkTexts = splitTextIntoChunks(rawText)
+  if (chunkTexts.length === 0) {
+    throw new Error(`No text chunks could be extracted from "${filename}"`)
+  }
+
+  const { data: docRecord, error: docError } = await supabase
+    .from('documents')
+    .insert({
+      name: filename.replace(/\.txt$/i, ''),
+      original_filename: filename,
+      file_size: fileSize,
+      total_chunks: chunkTexts.length,
+      metadata: {},
+    })
+    .select()
+    .single()
+
+  if (docError || !docRecord) {
+    throw new Error(`Failed to create document record: ${docError?.message}`)
+  }
+
+  let insertedCount = 0
+  for (let i = 0; i < chunkTexts.length; i += EMBED_BATCH_SIZE) {
+    const batch = chunkTexts.slice(i, i + EMBED_BATCH_SIZE)
+    const embeddingResponse = await openai.embeddings.create({
+      model: EMBEDDING_MODEL,
+      input: batch,
+    })
+    const rows = batch.map((t, j) => ({
+      document_id: docRecord.id,
+      content: t,
+      chunk_index: i + j,
+      embedding: embeddingResponse.data[j].embedding,
+      metadata: { source: filename, chunk_index: i + j },
+    }))
+    const { error: chunkError } = await supabase.from('document_chunks').insert(rows)
+    if (chunkError) {
+      await supabase.from('documents').delete().eq('id', docRecord.id)
+      throw new Error(`Failed to insert chunks: ${chunkError.message}`)
+    }
+    insertedCount += batch.length
+  }
+
+  await supabase.from('documents').update({ total_chunks: insertedCount }).eq('id', docRecord.id)
+
+  return {
+    documentId: docRecord.id,
+    documentName: docRecord.name,
+    totalChunks: insertedCount,
+    fileSize,
+  }
+}
+
+/**
  * Process a PDF buffer: extract text, chunk, embed, and store in Supabase.
  * @param buffer   Raw PDF file bytes
  * @param filename Original filename (displayed in knowledge base)

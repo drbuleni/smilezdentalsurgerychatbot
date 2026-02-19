@@ -106,7 +106,7 @@ export default function UploadForm({ password, onUploadComplete }: UploadFormPro
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf,application/pdf"
+          accept=".pdf,application/pdf,.txt,text/plain"
           className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
           disabled={uploading}
