@@ -30,13 +30,13 @@ export async function embedQuery(query: string): Promise<number[]> {
  * Retrieve the most relevant document chunks from Supabase
  * using cosine similarity search.
  */
-export async function retrieveContext(query: string, matchCount = 5): Promise<RAGContext> {
+export async function retrieveContext(query: string, matchCount = 8): Promise<RAGContext> {
   const supabase = supabaseAdmin()
   const queryEmbedding = await embedQuery(query)
 
   const { data, error } = await supabase.rpc('match_document_chunks', {
     query_embedding: queryEmbedding,
-    match_threshold: 0.70,
+    match_threshold: 0.50,
     match_count: matchCount,
   })
 
